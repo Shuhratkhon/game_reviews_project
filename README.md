@@ -1,8 +1,8 @@
 GAME REVIEWS ANALYSIS PROJECT:
 
-Python-based Goggle Play review analysis project
+> Python-based Goggle Play review analysis project
 
-🛠️ Technologies:
+## 🛠️ Technologies:
 - Python (Data collection and analysis)
 - Pandas (Data processing)
 - Google Play Scraper (Review crawling)
@@ -10,17 +10,17 @@ Python-based Goggle Play review analysis project
 - CSV (Simple Dataset storage)
 - GitHub (Project hosting)
 
-📊 Key Analysis Process:
->1 Review Crawling 5 popular Supercell games:
+## 📊 Key Analysis Process:
+1 - Review Crawling 5 popular Supercell games:
 100 top-liked reviews of each 2024, 2025, 2026
->2 Topic Classification:
+2 - Topic Classification:
 classifying each review into 9 main gaming topics + others
->3 Rating Analysis:
+3 - Rating Analysis:
 ratings of 1-5, rating growth/decline
->4 Data Visualization:
+4 - Data Visualization:
 generating analytical charts for each game and each year
 
-🔮 Future Improvements:
+## 🔮 Future Improvements:
 - More games and review sources
 - Sentiment analysis
 - Advanced NLP topic detection
