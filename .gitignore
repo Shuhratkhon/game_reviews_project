@@ -1,0 +1,7 @@
+# PowerPoint files are kept out of the repo
+*.pptx
+~$*
+
+# Python / IDE
+__pycache__/
+.idea/
