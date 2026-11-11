@@ -1,0 +1,7 @@
+Model,Version,Accuracy,Precision,Recall,F1-score,Time (s)
+Logistic Regression,Default,0.797,0.8439,0.7209,0.7394,0.0531
+Logistic Regression,Tuned,0.8416,0.8307,0.8166,0.8227,15.6841
+Naive Bayes,Default,0.6634,0.8291,0.5211,0.4375,0.0705
+Naive Bayes,Tuned,0.8416,0.8551,0.794,0.8121,3.7614
+Linear SVM,Default,0.8267,0.8166,0.7955,0.8038,0.0795
+Linear SVM,Tuned,0.8366,0.826,0.8095,0.8164,7.5888

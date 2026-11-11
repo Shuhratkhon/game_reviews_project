@@ -1,7 +1,6 @@
 from google_play_scraper import reviews, Sort
 import pandas as pd
 
-# main:
 games = {
     "clash_of_clans": "com.supercell.clashofclans",
     "clash_royale": "com.supercell.clashroyale",
@@ -11,30 +10,73 @@ games = {
 }
 
 years = [2024, 2025, 2026]
+per_year = 100       # reviews we want for each game and year
+max_reviews = 6000   # stop looking after this many reviews per game
+batch_size = 200
+
+
+def enough_reviews(found):
+    counts = pd.Series([r["at"].year for r in found]).value_counts()
+    return all(counts.get(year, 0) >= per_year for year in years)
+
+
+def crawl_game(app_id):
+    found = []
+    token = None
+
+    # google play gives reviews in pages, so we keep asking until
+    # every year has enough reviews or there is nothing left
+    while len(found) < max_reviews:
+        result, token = reviews(
+            app_id,
+            lang="en",
+            country="us",
+            sort=Sort.MOST_RELEVANT,
+            count=batch_size,
+            continuation_token=token
+        )
+
+        if not result:
+            break
+
+        found.extend(result)
+
+        if enough_reviews(found) or token is None:
+            break
+
+    df = pd.DataFrame(found)
+    if df.empty:
+        return df
+
+    return df.drop_duplicates(subset="reviewId")
+
 
 all_reviews = []
 
-# crawling:
 for game, app_id in games.items():
     print("\nCrawling reviews for:", game)
-    result, _ = reviews(
-        app_id,
-        lang="en",
-        country="us",
-        sort=Sort.MOST_RELEVANT,
-        count=3000
-    )
 
-    df = pd.DataFrame(result)
+    try:
+        df = crawl_game(app_id)
+    except Exception as e:
+        print("  failed:", e)
+        continue
+
+    if df.empty:
+        print("  no reviews found")
+        continue
+
+    print("  reviews checked:", len(df))
     df["year"] = df["at"].dt.year
 
     for year in years:
-        year_reviews = df[df["year"] == year]
-        top_reviews = year_reviews.sort_values(
-            "thumbsUpCount", ascending=False
-        ).head(100)
+        # most liked reviews of that year
+        top = df[df["year"] == year].sort_values("thumbsUpCount", ascending=False).head(per_year)
 
-        for _, r in top_reviews.iterrows():
+        if len(top) < per_year:
+            print(f"  warning: only {len(top)} reviews for {year}")
+
+        for _, r in top.iterrows():
             all_reviews.append({
                 "game": game,
                 "year": year,
@@ -44,46 +86,9 @@ for game, app_id in games.items():
                 "likes": r["thumbsUpCount"]
             })
 
-# saving:
 dataset = pd.DataFrame(all_reviews)
 dataset.to_csv("supercell_reviews_dataset.csv", index=False)
 
-print("\nDataset created successfully")
-print("Total reviews collected:", len(dataset))
-
-
-# analysis:
-print("\nAVERAGE RATINGS PER YEAR\n")
-
-avg = dataset.groupby(["game", "year"])["rating"].mean()
-
-for (game, year), value in avg.items():
-    print(game, "-", year, "average rating:", round(value, 2))
-
-
-print("\nRATING GROWTH / DECLINE\n")
-
-for game in games.keys():
-    r2024 = avg.get((game, 2024))
-    r2025 = avg.get((game, 2025))
-    r2026 = avg.get((game, 2026))
-
-    if r2024 and r2025:
-        growth_1 = ((r2025 - r2024) / r2024) * 100
-    else:
-        growth_1 = None
-
-    if r2025 and r2026:
-        growth_2 = ((r2026 - r2025) / r2025) * 100
-    else:
-        growth_2 = None
-
-    print("\nGame:", game)
-    print("2024 average rating:", round(r2024, 2) if r2024 else "no data")
-    print("2025 average rating:", round(r2025, 2) if r2025 else "no data")
-    print("2026 average rating:", round(r2026, 2) if r2026 else "no data")
-
-    if growth_1:
-        print("2024 → 2025 change:", round(growth_1, 2), "%")
-    if growth_2:
-        print("2025 → 2026 change:", round(growth_2, 2), "%")
+print("\nDataset saved: supercell_reviews_dataset.csv")
+print("Total reviews:", len(dataset))
+print(dataset.groupby(["game", "year"]).size().unstack(fill_value=0))
